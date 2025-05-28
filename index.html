@@ -76,10 +76,8 @@
   </div>
 
   <script>
-    const BIN_ID = '683744ca8960c979a5a24bb8';
-    const API_KEY = '$2a$10$5DRJeXgvJ51hdZLqY5dageFQbTD6qCQGuO3KsWS6iRTiZpmOrUwiG';
-    const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-    const BIN_LATEST = `${BIN_URL}/latest`;
+    const WORKER_URL = 'https://seznam.micm27.workers.dev/';
+    const AUTH_HEADER = { 'Authorization': 'Bearer admin-token' };
 
     const VALID_USERNAME = "admin";
     const VALID_PASSWORD = "admin";
@@ -98,7 +96,6 @@
       }
     }
 
-    // Pokud už je uživatel ověřený
     if (localStorage.getItem('authenticated') === 'true') {
       window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loginScreen').style.display = 'none';
@@ -172,11 +169,11 @@
     }
 
     function updateBin(newData) {
-      fetch(BIN_URL, {
+      fetch(WORKER_URL, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': API_KEY
+          ...AUTH_HEADER,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(newData)
       })
@@ -190,10 +187,9 @@
     }
 
     function loadData() {
-      fetch(BIN_LATEST, {
-        headers: {
-          'X-Master-Key': API_KEY
-        }
+      fetch(WORKER_URL, {
+        method: 'GET',
+        headers: AUTH_HEADER
       })
       .then(res => res.json())
       .then(json => {
