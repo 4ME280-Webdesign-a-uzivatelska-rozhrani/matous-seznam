@@ -62,6 +62,10 @@
   <!-- Obsah aplikace -->
   <div id="appContent" style="display: none;">
     <div class="container">
+      <div class="text-end mb-3">
+        <button class="btn btn-outline-dark btn-sm" onclick="logout()">🚪 Odhlásit se</button>
+      </div>
+
       <h1 class="text-center mb-4">
         <a href="https://youtu.be/80RQvQpmcMs?si=DitrZG9wvCX6CF0T" target="_blank" class="no-decoration">
           🎶 Hipsterský byt
@@ -79,6 +83,7 @@
 
       <div class="d-flex justify-content-end mb-3">
         <button class="btn btn-outline-danger btn-sm" onclick="removeCheckedItems()">🗑️ Smazat koupené</button>
+        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="removeAllItems()">🧹 Vymazat vše</button>
       </div>
 
       <div id="shoppingList"></div>
@@ -105,12 +110,9 @@
       }
     }
 
-    if (localStorage.getItem('authenticated') === 'true') {
-      window.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appContent').style.display = '';
-        loadData();
-      });
+    function logout() {
+      localStorage.removeItem('authenticated');
+      location.reload();
     }
 
     function renderList(items) {
@@ -176,6 +178,12 @@
       updateBin(data);
     }
 
+    function removeAllItems() {
+      if (!confirm('Opravdu chceš smazat úplně všechno?')) return;
+      data = [];
+      updateBin(data);
+    }
+
     function updateBin(newData) {
       fetch(WORKER_URL, {
         method: 'PUT',
@@ -209,6 +217,21 @@
         document.getElementById('shoppingList').innerHTML = `<p class="text-danger">❌ Chyba při načítání seznamu: ${err.message}</p>`;
       });
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('newItemInput');
+      input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          addItem();
+        }
+      });
+
+      if (localStorage.getItem('authenticated') === 'true') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appContent').style.display = '';
+        loadData();
+      }
+    });
   </script>
 </body>
 </html>
