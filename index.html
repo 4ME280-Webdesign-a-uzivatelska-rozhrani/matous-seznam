@@ -25,11 +25,8 @@
       text-decoration: line-through;
       color: #aaa;
     }
-    .count-badge {
-      background-color: #dee2e6;
-      border-radius: 0.5rem;
-      padding: 0.2rem 0.5rem;
-      font-size: 0.9rem;
+    .count-input {
+      width: 60px;
       margin-left: 0.5rem;
     }
   </style>
@@ -39,11 +36,8 @@
     <h1 class="text-center mb-4">🛒 Můj nákupní seznam</h1>
 
     <div class="mb-3 row">
-      <div class="col-md-7 mb-2">
-        <input id="newItemInput" class="form-control" placeholder="Položka (např. Mléko)" />
-      </div>
-      <div class="col-md-3 mb-2">
-        <input id="newItemCount" type="number" min="1" class="form-control" placeholder="Počet (např. 2)" />
+      <div class="col-md-10 mb-2">
+        <input id="newItemInput" class="form-control" placeholder="Přidat položku..." />
       </div>
       <div class="col-md-2">
         <button class="btn btn-success w-100" onclick="addItem()">➕ Přidat</button>
@@ -73,9 +67,8 @@
         const row = document.createElement('div');
         row.className = 'item-row' + (item.checked ? ' checked' : '');
 
-        const label = document.createElement('label');
-        label.className = 'form-check-label flex-grow-1';
-        label.innerHTML = `${item.item} <span class="count-badge">${item.count}×</span>`;
+        const left = document.createElement('div');
+        left.className = 'd-flex align-items-center flex-grow-1';
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -86,22 +79,37 @@
           updateBin(data);
         };
 
-        row.appendChild(checkbox);
-        row.appendChild(label);
+        const label = document.createElement('span');
+        label.textContent = item.item;
+
+        const countInput = document.createElement('input');
+        countInput.type = 'number';
+        countInput.min = 1;
+        countInput.value = item.count || 1;
+        countInput.className = 'form-control form-control-sm count-input';
+        countInput.onchange = () => {
+          const newVal = parseInt(countInput.value, 10);
+          if (!isNaN(newVal) && newVal > 0) {
+            data[index].count = newVal;
+            updateBin(data);
+          }
+        };
+
+        left.appendChild(checkbox);
+        left.appendChild(label);
+        row.appendChild(left);
+        row.appendChild(countInput);
+
         container.appendChild(row);
       });
     }
 
     function addItem() {
       const input = document.getElementById('newItemInput');
-      const countInput = document.getElementById('newItemCount');
       const newItem = input.value.trim();
-      const count = parseInt(countInput.value.trim(), 10) || 1;
-
       if (newItem) {
-        data.push({ item: newItem, count: count, checked: false });
+        data.push({ item: newItem, count: 1, checked: false });
         input.value = '';
-        countInput.value = '';
         updateBin(data);
       }
     }
@@ -138,7 +146,10 @@
     })
     .then(res => res.json())
     .then(json => {
-      data = json.record;
+      data = json.record.map(item => ({
+        ...item,
+        count: item.count || 1 // fallback pro staré položky
+      }));
       renderList(data);
     })
     .catch(err => {
