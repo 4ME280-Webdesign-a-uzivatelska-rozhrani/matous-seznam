@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Nákupní seznam 🛒</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="icon" href="https://em-content.zobj.net/thumbs/240/apple/354/shopping-cart_1f6d2.png">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      padding: 2rem;
+    }
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .item-row.checked {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center mb-4">🛒 Můj nákupní seznam</h1>
+
+    <div class="mb-3 d-flex">
+      <input id="newItemInput" class="form-control me-2" placeholder="Přidat novou položku..." />
+      <button class="btn btn-success" onclick="addItem()">➕ Přidat</button>
+    </div>
+
+    <div id="shoppingList"></div>
+  </div>
+
+  <script>
+    const BIN_ID = '683744ca8960c979a5a24bb8'; // ← sem dej svůj vlastní ID, pokud jiný
+    const API_KEY = '$2a$10$5DRJeXgvJ51hdZLqY5dageFQbTD6qCQGuO3KsWS6iRTiZpmOrUwiG';
+    const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    const BIN_LATEST = `${BIN_URL}/latest`;
+
+    let data = [];
+
+    function renderList(items) {
+      const container = document.getElementById('shoppingList');
+      container.innerHTML = '';
+
+      items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'item-row' + (item.checked ? ' checked' : '');
+
+        const label = document.createElement('label');
+        label.className = 'form-check-label flex-grow-1';
+        label.textContent = item.item;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'form-check-input me-2';
+        checkbox.checked = item.checked;
+        checkbox.onchange = () => {
+          data[index].checked = checkbox.checked;
+          updateBin(data);
+        };
+
+        row.appendChild(checkbox);
+        row.appendChild(label);
+        container.appendChild(row);
+      });
+    }
+
+    function addItem() {
+      const input = document.getElementById('newItemInput');
+      const newItem = input.value.trim();
+      if (newItem) {
+        data.push({ item: newItem, checked: false });
+        input.value = '';
+        updateBin(data);
+      }
+    }
+
+    function updateBin(newData) {
+      fetch(BIN_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': API_KEY
+        },
+        body: JSON.stringify(newData)
+      })
+      .then(res => res.json())
+      .then(() => {
+        renderList(newData);
+      })
+      .catch(err => {
+        alert('❌ Chyba při ukládání: ' + err.message);
+      });
+    }
+
+    fetch(BIN_LATEST, {
+      headers: {
+        'X-Master-Key': API_KEY
+      }
+    })
+    .then(res => res.json())
+    .then(json => {
+      data = json.record;
+      renderList(data);
+    })
+    .catch(err => {
+      document.getElementById('shoppingList').textContent = '❌ Chyba při načítání seznamu: ' + err.message;
+    });
+  </script>
+</body>
+</html>
