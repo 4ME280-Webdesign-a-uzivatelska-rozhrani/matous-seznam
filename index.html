@@ -38,9 +38,11 @@
       right: 0;
       background: #fff;
       border-top: 1px solid #ddd;
-      padding: 0.75rem;
+      padding: 0.75rem 1rem;
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
       z-index: 1000;
     }
     .dark-mode body {
@@ -54,34 +56,25 @@
     .dark-toggle {
       cursor: pointer;
     }
-    .category-title {
-      font-weight: bold;
-      margin-top: 2rem;
-      border-bottom: 2px solid #ccc;
-    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container pb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>🎶 <a href="https://youtu.be/80RQvQpmcMs?si=DitrZG9wvCX6CF0T" target="_blank" class="text-decoration-none text-dark">Hipsterský byt</a> – nákupní seznam</h2>
       <i class="fas fa-moon fa-lg dark-toggle" onclick="toggleDarkMode()"></i>
     </div>
     <div class="input-group mb-3">
       <input type="text" id="newItemInput" class="form-control" placeholder="Přidat položku..." onkeypress="handleKeyPress(event)">
-      <select id="categorySelect" class="form-select w-auto">
-        <option value="Jídlo">Jídlo</option>
-        <option value="Drogerie">Drogerie</option>
-        <option value="Elektronika">Elektronika</option>
-        <option value="Jiné">Jiné</option>
-      </select>
       <button class="btn btn-primary" onclick="addItem()">➕</button>
     </div>
     <div id="shoppingList"></div>
   </div>
 
   <div class="toolbar">
+    <button class="btn btn-success" onclick="markAllAsBought()">✅ Označit vše jako koupené</button>
     <button class="btn btn-outline-danger" onclick="removeCheckedItems()">🗑️ Smazat koupené</button>
+    <button class="btn btn-outline-dark" onclick="clearAllItems()">🧹 Vymazat vše</button>
     <button class="btn btn-outline-secondary" onclick="logout()">🔓 Odhlásit se</button>
   </div>
 
@@ -103,63 +96,47 @@
     function renderList(items) {
       const container = document.getElementById('shoppingList');
       container.innerHTML = '';
+      items.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card-item' + (item.checked ? ' checked' : '');
 
-      const categories = {};
-      items.forEach(item => {
-        const cat = item.category || 'Jiné';
-        if (!categories[cat]) categories[cat] = [];
-        categories[cat].push(item);
-      });
+        const row = document.createElement('div');
+        row.className = 'd-flex justify-content-between align-items-center';
 
-      Object.keys(categories).forEach(cat => {
-        const title = document.createElement('div');
-        title.className = 'category-title';
-        title.textContent = cat;
-        container.appendChild(title);
+        const label = document.createElement('div');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'form-check-input me-2';
+        checkbox.checked = item.checked;
+        checkbox.onchange = () => {
+          data[index].checked = checkbox.checked;
+          updateBin(data);
+        };
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(item.item));
 
-        categories[cat].forEach((item, index) => {
-          const card = document.createElement('div');
-          card.className = 'card-item' + (item.checked ? ' checked' : '');
+        const countInput = document.createElement('input');
+        countInput.type = 'number';
+        countInput.min = 1;
+        countInput.value = item.count || 1;
+        countInput.className = 'form-control count-input';
+        countInput.onchange = () => {
+          data[index].count = parseInt(countInput.value, 10);
+          updateBin(data);
+        };
 
-          const row = document.createElement('div');
-          row.className = 'd-flex justify-content-between align-items-center';
-
-          const label = document.createElement('div');
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.className = 'form-check-input me-2';
-          checkbox.checked = item.checked;
-          checkbox.onchange = () => {
-            item.checked = checkbox.checked;
-            updateBin(data);
-          };
-          label.appendChild(checkbox);
-          label.appendChild(document.createTextNode(item.item));
-
-          const countInput = document.createElement('input');
-          countInput.type = 'number';
-          countInput.min = 1;
-          countInput.value = item.count || 1;
-          countInput.className = 'form-control count-input';
-          countInput.onchange = () => {
-            item.count = parseInt(countInput.value, 10);
-            updateBin(data);
-          };
-
-          row.appendChild(label);
-          row.appendChild(countInput);
-          card.appendChild(row);
-          container.appendChild(card);
-        });
+        row.appendChild(label);
+        row.appendChild(countInput);
+        card.appendChild(row);
+        container.appendChild(card);
       });
     }
 
     function addItem() {
       const input = document.getElementById('newItemInput');
-      const category = document.getElementById('categorySelect').value;
       const newItem = input.value.trim();
       if (newItem) {
-        data.push({ item: newItem, count: 1, checked: false, category });
+        data.push({ item: newItem, count: 1, checked: false });
         input.value = '';
         updateBin(data);
       }
@@ -168,6 +145,17 @@
     function removeCheckedItems() {
       if (!confirm('Smazat všechny koupené položky?')) return;
       data = data.filter(item => !item.checked);
+      updateBin(data);
+    }
+
+    function clearAllItems() {
+      if (!confirm('Opravdu chceš vymazat celý seznam?')) return;
+      data = [];
+      updateBin(data);
+    }
+
+    function markAllAsBought() {
+      data.forEach(item => item.checked = true);
       updateBin(data);
     }
 
@@ -199,8 +187,7 @@
       .then(json => {
         data = json.record.map(item => ({
           ...item,
-          count: item.count || 1,
-          category: item.category || 'Jiné'
+          count: item.count || 1
         }));
         renderList(data);
       })
