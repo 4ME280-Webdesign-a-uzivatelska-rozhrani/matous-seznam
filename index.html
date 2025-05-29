@@ -56,7 +56,6 @@
     <input type="text" id="usernameInput" class="form-control mb-2" placeholder="Uživatelské jméno…" />
     <input type="password" id="passwordInput" class="form-control mb-3" placeholder="Heslo…" />
     <button class="btn btn-primary" onclick="checkPassword()">Přihlásit se</button>
-    <p class="mt-2 text-danger d-none" id="loginError">Nesprávné jméno nebo heslo.</p>
   </div>
 
   <!-- Obsah aplikace -->
@@ -106,7 +105,8 @@
         document.getElementById('appContent').style.display = '';
         loadData();
       } else {
-        document.getElementById('loginError').classList.remove('d-none');
+        // Rickroll on fail 🎣
+        window.location.href = 'https://youtu.be/dQw4w9WgXcQ?si=IwUt_RGOSBdrljkz';
       }
     }
 
